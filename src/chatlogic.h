@@ -17,7 +17,7 @@ private:
     ////
 
     // data handles (owned)
-    std::vector<GraphNode *> _nodes;
+    std::vector<std::unique_ptr<GraphNode>> _nodes;
     std::vector<GraphEdge *> _edges;
 
     ////
@@ -45,7 +45,7 @@ public:
     void SetChatbotHandle(ChatBot *chatbot);
 
     // proprietary functions
-    void LoadAnswerGraphFromFile(std::string filename);
+    void LoadAnswerGraphFromFile(std::string filename); //This will initialize the nodes and edges.
     void SendMessageToChatbot(std::string message);
     void SendMessageToUser(std::string message);
     wxBitmap *GetImageFromChatbot();

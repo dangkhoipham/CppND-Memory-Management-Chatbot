@@ -36,16 +36,16 @@ ChatLogic::~ChatLogic()
     delete _chatBot;
 
     // delete all nodes
-    for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
-    {
-        delete *it;
-    }
+    // for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
+    // {
+    //     delete *it;
+    // }
 
     // delete all edges
-    for (auto it = std::begin(_edges); it != std::end(_edges); ++it)
-    {
-        delete *it;
-    }
+    // for (auto it = std::begin(_edges); it != std::end(_edges); ++it)
+    // {
+    //     delete *it;
+    // }
 
     ////
     //// EOF STUDENT CODE
@@ -54,11 +54,12 @@ ChatLogic::~ChatLogic()
 template <typename T>
 void ChatLogic::AddAllTokensToElement(std::string tokenID, tokenlist &tokens, T &element)
 {
+    // This function is to add values of tokens having Id = tokenID to the Element
     // find all occurences for current node
     auto token = tokens.begin();
     while (true)
     {
-        token = std::find_if(token, tokens.end(), [&tokenID](const std::pair<std::string, std::string> &pair) { return pair.first == tokenID;; });
+        token = std::find_if(token, tokens.end(), [&tokenID](const std::pair<std::string, std::string> &pair) { return pair.first == tokenID; });
         if (token != tokens.end())
         {
             element.AddToken(token->second); // add new keyword to edge
@@ -83,7 +84,8 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
         std::string lineStr;
         while (getline(file, lineStr))
         {
-            // extract all tokens from current line
+            // extract all tokens from current line.
+            
             tokenlist tokens;
             while (lineStr.size() > 0)
             {
@@ -107,13 +109,15 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
 
                 // remove token from current line
                 lineStr = lineStr.substr(posTokenBack + 1, lineStr.size());
-            }
+            } // the output is a vector of 3 pairs <<>,<>,<>>
 
             // process tokens for current line
+            // find the pair <TYPE:type> 
             auto type = std::find_if(tokens.begin(), tokens.end(), [](const std::pair<std::string, std::string> &pair) { return pair.first == "TYPE"; });
             if (type != tokens.end())
             {
                 // check for id
+                // find the pair of <ID:id>
                 auto idToken = std::find_if(tokens.begin(), tokens.end(), [](const std::pair<std::string, std::string> &pair) { return pair.first == "ID"; });
                 if (idToken != tokens.end())
                 {
@@ -127,16 +131,16 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
                         ////
 
                         // check if node with this ID exists already
-                        auto newNode = std::find_if(_nodes.begin(), _nodes.end(), [&id](GraphNode *node) { return node->GetID() == id; });
+                        auto newNode = std::find_if(_nodes.begin(), _nodes.end(), [&id](auto& node) { return node->GetID() == id; });
 
                         // create new element if ID does not yet exist
                         if (newNode == _nodes.end())
                         {
-                            _nodes.emplace_back(new GraphNode(id));
-                            newNode = _nodes.end() - 1; // get iterator to last element
+                            _nodes.emplace_back(std::make_unique<GraphNode>(id)); //create a new node
+                            newNode = _nodes.end() - 1; // get iterator to last element (newly created)
 
                             // add all answers to current node
-                            AddAllTokensToElement("ANSWER", tokens, **newNode);
+                            AddAllTokensToElement("ANSWER", tokens, **newNode); //**newNode refer to the reference of object
                         }
 
                         ////
@@ -156,21 +160,21 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
                         if (parentToken != tokens.end() && childToken != tokens.end())
                         {
                             // get iterator on incoming and outgoing node via ID search
-                            auto parentNode = std::find_if(_nodes.begin(), _nodes.end(), [&parentToken](GraphNode *node) { return node->GetID() == std::stoi(parentToken->second); });
-                            auto childNode = std::find_if(_nodes.begin(), _nodes.end(), [&childToken](GraphNode *node) { return node->GetID() == std::stoi(childToken->second); });
+                            auto parentNode = std::find_if(_nodes.begin(), _nodes.end(), [&parentToken](auto& node) { return node->GetID() == std::stoi(parentToken->second); });
+                            auto childNode = std::find_if(_nodes.begin(), _nodes.end(), [&childToken](auto& node) { return node->GetID() == std::stoi(childToken->second); });
 
                             // create new edge
                             GraphEdge *edge = new GraphEdge(id);
-                            edge->SetChildNode(*childNode);
-                            edge->SetParentNode(*parentNode);
+                            edge->SetChildNode((*childNode).get());
+                            edge->SetParentNode((*parentNode).get());
                             _edges.push_back(edge);
 
                             // find all keywords for current node
                             AddAllTokensToElement("KEYWORD", tokens, *edge);
 
                             // store reference in child node and parent node
-                            (*childNode)->AddEdgeToParentNode(edge);
-                            (*parentNode)->AddEdgeToChildNode(edge);
+                            (*childNode)->AddEdgeToParentNode(edge); // add the edge to the vector of parentEdges
+                            (*parentNode)->AddEdgeToChildNode(edge); // add the edge to the vector of childEdges
                         }
 
                         ////
@@ -198,15 +202,17 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
 
     // identify root node
     GraphNode *rootNode = nullptr;
-    for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
+    //for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
+    for (auto& node: _nodes)
     {
         // search for nodes which have no incoming edges
-        if ((*it)->GetNumberOfParents() == 0)
+        //if ((*it)->GetNumberOfParents() == 0)
+        if (node->GetNumberOfParents() == 0)
         {
-
             if (rootNode == nullptr)
             {
-                rootNode = *it; // assign current node to root
+                //rootNode = *it; // assign current node to root
+                rootNode = node.get();
             }
             else
             {

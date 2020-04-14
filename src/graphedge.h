@@ -9,7 +9,8 @@ class GraphNode; // forward declaration
 class GraphEdge
 {
 private:
-    // data handles (not owned)
+    // data handles (not owned), just to store information.
+    // Hence we will not delete in destructor.
     GraphNode *_childNode;
     GraphNode *_parentNode;
 
